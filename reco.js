@@ -37,13 +37,16 @@ console.log("I'm talking with Google")
 
 asyncRecognize(process.env.GOOGLE_RAW).then(res => {
   let transcription = res[0];
-
-    fetch(process.env.TRANSCRIPTION_RECEIVER_URL, {
+    // post transcription in the general room
+    fetch(`${process.env.TRANSCRIPTION_RECEIVER_URL}/general`, {
       method: 'POST',
       headers: {
        "Content-Type": "application/json"
       },
-      body: JSON.stringify({transcription:transcription})
+      body: JSON.stringify({
+        from: "@k33g_org",
+        message: transcription
+      })
     })
     .then(response => {
       return response;
