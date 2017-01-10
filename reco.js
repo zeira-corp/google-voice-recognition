@@ -2,10 +2,8 @@
 'use strict';
 require('shelljs/global');
 
+const fetch = require('node-fetch');
 const Speech = require('@google-cloud/speech');
-
-process.env["GCLOUD_PROJECT"] = "hey-bob-desktop";
-process.env["GOOGLE_APPLICATION_CREDENTIALS"] = "../bob.json";
 
 function asyncRecognize (filename) {
   // Instantiates a client
@@ -28,17 +26,32 @@ function asyncRecognize (filename) {
       return operation.promise();
     })
     .then((transcription) => {
-      //console.log(`Transcription: ${transcription}`);
+      console.log(`Transcription: ${transcription}`);
       return transcription;
     });
 }
 
 console.log("Speak when you see the message 'Recording raw data'")
-exec(`arecord -D plughw:1,0 -t RAW -f S16_LE -r 16000 -d 5.0 ./resources/bob.raw`)
+exec(`arecord -D plughw:1,0 -t RAW -f S16_LE -r 16000 -d 5.0 ${process.env.GOOGLE_RAW}`)
 console.log("I'm talking with Google")
 
-asyncRecognize('./resources/bob.raw').then(res => {
-  console.log(`Transcription: ${res[0]}`)
+asyncRecognize(process.env.GOOGLE_RAW).then(res => {
+  let transcription = res[0];
+
+    fetch(process.env.TRANSCRIPTION_RECEIVER_URL, {
+      method: 'POST',
+      headers: {
+       "Content-Type": "application/json"
+      },
+      body: JSON.stringify({transcription:transcription})
+    })
+    .then(response => {
+      return response;
+    })
+    .catch(err => {
+      console.log(err);
+    })
+
 }).catch(err => {
   console.error(err);
 })
